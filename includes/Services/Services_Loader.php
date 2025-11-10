@@ -138,7 +138,7 @@ final class Services_Loader implements With_Hooks {
 				 * @param Capability_Controller $controller The capability controller, which can be used to modify the
 				 *                                          rules for how capabilities are granted.
 				 */
-				do_action( 'ais_load_services_capabilities', $controller );
+				do_action( 'ai_services_load_services_capabilities', $controller );
 
 				$this->container['capability_filters']->add_hooks();
 			},
@@ -186,7 +186,7 @@ final class Services_Loader implements With_Hooks {
 	}
 
 	/**
-	 * Loads the plugin's REST API routes..
+	 * Loads the plugin's REST API routes.
 	 *
 	 * @since 0.1.0
 	 */

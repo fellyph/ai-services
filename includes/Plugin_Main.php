@@ -13,6 +13,11 @@ use Felix_Arntz\AI_Services\Anthropic\Anthropic_AI_Text_Generation_Model;
 use Felix_Arntz\AI_Services\Google\Google_AI_Image_Generation_Model;
 use Felix_Arntz\AI_Services\Google\Google_AI_Service;
 use Felix_Arntz\AI_Services\Google\Google_AI_Text_Generation_Model;
+use Felix_Arntz\AI_Services\Mistral\Mistral_AI_Service;
+use Felix_Arntz\AI_Services\Mistral\Mistral_AI_Text_Generation_Model;
+use Felix_Arntz\AI_Services\Mock\Mock_AI_Image_Generation_Model;
+use Felix_Arntz\AI_Services\Mock\Mock_AI_Service;
+use Felix_Arntz\AI_Services\Mock\Mock_AI_Text_Generation_Model;
 use Felix_Arntz\AI_Services\OpenAI\OpenAI_AI_Image_Generation_Model;
 use Felix_Arntz\AI_Services\OpenAI\OpenAI_AI_Service;
 use Felix_Arntz\AI_Services\OpenAI\OpenAI_AI_Text_Generation_Model;
@@ -93,6 +98,7 @@ class Plugin_Main implements With_Hooks {
 		$this->maybe_install_data();
 		$this->add_cleanup_hooks();
 		$this->add_service_hooks();
+		$this->maybe_register_mock_service();
 	}
 
 	/**
@@ -199,6 +205,25 @@ class Plugin_Main implements With_Hooks {
 	 */
 	private function add_service_hooks(): void {
 		// Register options.
+		$this->load_options();
+
+		// Load chatbot if needed.
+		add_action(
+			'init',
+			function () {
+				if ( $this->container['chatbot_loader']->can_load() ) {
+					$this->container['chatbot_loader']->load( $this->container['chatbot'] );
+				}
+			}
+		);
+	}
+
+	/**
+	 * Loads the plugin options.
+	 *
+	 * @since 0.7.0
+	 */
+	private function load_options(): void {
 		$option_registrar = new Option_Hook_Registrar( $this->container['option_registry'] );
 		$option_registrar->add_register_callback(
 			function ( $registry ) {
@@ -208,16 +233,6 @@ class Plugin_Main implements With_Hooks {
 						$option->get_key(),
 						$option->get_registration_args()
 					);
-				}
-			}
-		);
-
-		// Load chatbot if needed.
-		add_action(
-			'init',
-			function () {
-				if ( $this->container['chatbot_loader']->can_load() ) {
-					$this->container['chatbot_loader']->load( $this->container['chatbot'] );
 				}
 			}
 		);
@@ -313,6 +328,25 @@ class Plugin_Main implements With_Hooks {
 			)
 		);
 		$this->services_api->register_service(
+			'mistral',
+			static function ( Service_Registration_Context $context ) {
+				return new Mistral_AI_Service(
+					$context->get_metadata(),
+					$context->get_authentication(),
+					$context->get_request_handler()
+				);
+			},
+			array(
+				'name'            => 'Mistral',
+				'credentials_url' => 'https://admin.mistral.ai/organization/api-keys',
+				'type'            => Service_Type::CLOUD,
+				'capabilities'    => AI_Capabilities::get_model_classes_capabilities(
+					array( Mistral_AI_Text_Generation_Model::class )
+				),
+				'allow_override'  => false,
+			)
+		);
+		$this->services_api->register_service(
 			'openai',
 			static function ( Service_Registration_Context $context ) {
 				return new OpenAI_AI_Service(
@@ -375,6 +409,57 @@ class Plugin_Main implements With_Hooks {
 				),
 				'allow_override'  => false,
 			)
+		);
+	}
+
+	/**
+	 * Registers the mock AI service, if enabled.
+	 *
+	 * Since the mock AI service is purely for testing, it is opt-in. The registration happens on 'plugins_loaded', to
+	 * allow other plugins to decide whether to opt in via the {@see 'ai_services_register_mock_service'} filter.
+	 *
+	 * @since 0.7.0
+	 */
+	private function maybe_register_mock_service(): void {
+		add_action(
+			'plugins_loaded',
+			function () {
+				/**
+				 * Filters whether to register the built-in mock AI service for testing.
+				 *
+				 * The mock AI service can be used to simulate the presence of an AI service and different models,
+				 * and expected content for actual AI requests can be provided for more granular testing.
+				 *
+				 * This serves no real purpose on a production site and is purely intended for testing.
+				 *
+				 * @since 0.7.0
+				 *
+				 * @param bool $register_mock_service Whether to register the mock AI service.
+				 */
+				if ( ! apply_filters( 'ai_services_register_mock_service', false ) ) {
+					return;
+				}
+
+				$this->services_api->register_service(
+					'mock',
+					static function ( Service_Registration_Context $context ) {
+						return new Mock_AI_Service(
+							$context->get_metadata()
+						);
+					},
+					array(
+						'name'           => 'Mock (for testing)',
+						'type'           => Service_Type::SERVER,
+						'capabilities'   => AI_Capabilities::get_model_classes_capabilities(
+							array(
+								Mock_AI_Text_Generation_Model::class,
+								Mock_AI_Image_Generation_Model::class,
+							)
+						),
+						'allow_override' => false,
+					)
+				);
+			}
 		);
 	}
 }

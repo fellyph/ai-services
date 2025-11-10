@@ -16,14 +16,22 @@ use Felix_Arntz\AI_Services_Dependencies\Felix_Arntz\WP_OOP_Plugin_Lib\HTTP\Cont
  * Class to interact directly with the Anthropic API.
  *
  * @since 0.1.0
- * @since n.e.x.t Now extends `Generic_AI_API_Client`.
+ * @since 0.7.0 Now extends `Generic_AI_API_Client`.
  */
 class Anthropic_AI_API_Client extends Generic_AI_API_Client {
 
 	/**
+	 * The Anthropic API version used in the `anthropic-version` header.
+	 *
+	 * @since 0.7.0
+	 * @var string
+	 */
+	const ANTHROPIC_API_VERSION = '2023-06-01';
+
+	/**
 	 * Constructor.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param string              $default_base_url    The default base URL for the API.
 	 * @param string              $default_api_version The default API version.
@@ -36,7 +44,7 @@ class Anthropic_AI_API_Client extends Generic_AI_API_Client {
 		string $default_api_version,
 		string $api_name,
 		Request_Handler $request_handler,
-		Authentication $authentication = null
+		?Authentication $authentication = null
 	) {
 		// Set custom header name for Anthropic API key authentication.
 		if ( $authentication ) {
@@ -49,7 +57,7 @@ class Anthropic_AI_API_Client extends Generic_AI_API_Client {
 	/**
 	 * Adds additional default request options to the given request options.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param array<string, mixed> $request_options The request options.
 	 * @return array<string, mixed> The updated request options.
@@ -60,7 +68,7 @@ class Anthropic_AI_API_Client extends Generic_AI_API_Client {
 		if ( ! isset( $request_options['headers'] ) ) {
 			$request_options['headers'] = array();
 		}
-		$request_options['headers']['anthropic-version'] = '2023-06-01';
+		$request_options['headers']['anthropic-version'] = self::ANTHROPIC_API_VERSION;
 
 		return $request_options;
 	}

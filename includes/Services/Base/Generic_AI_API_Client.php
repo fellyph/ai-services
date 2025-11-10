@@ -2,7 +2,7 @@
 /**
  * Class Felix_Arntz\AI_Services\Services\Base\Generic_AI_API_Client
  *
- * @since n.e.x.t
+ * @since 0.7.0
  * @package ai-services
  */
 
@@ -19,7 +19,7 @@ use Felix_Arntz\AI_Services_Dependencies\Felix_Arntz\WP_OOP_Plugin_Lib\HTTP\JSON
 /**
  * Generic implementation of an AI API client, configured via constructor parameters.
  *
- * @since n.e.x.t
+ * @since 0.7.0
  */
 class Generic_AI_API_Client implements Generative_AI_API_Client {
 	use Generative_AI_API_Client_Trait;
@@ -27,7 +27,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * The base URL for the API.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 * @var string
 	 */
 	private $default_base_url;
@@ -35,7 +35,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * The API version.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 * @var string
 	 */
 	private $default_api_version;
@@ -43,7 +43,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * The (human-readable) API name.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 * @var string
 	 */
 	private $api_name;
@@ -51,7 +51,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * The request handler instance.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 * @var Request_Handler
 	 */
 	private $request_handler;
@@ -59,7 +59,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * The authentication instance.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 * @var Authentication|null
 	 */
 	private $authentication;
@@ -67,7 +67,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Constructor.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param string              $default_base_url    The default base URL for the API.
 	 * @param string              $default_api_version The default API version.
@@ -80,7 +80,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 		string $default_api_version,
 		string $api_name,
 		Request_Handler $request_handler,
-		Authentication $authentication = null
+		?Authentication $authentication = null
 	) {
 		$this->default_base_url    = $default_base_url;
 		$this->default_api_version = $default_api_version;
@@ -92,7 +92,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Creates a GET request instance for the given parameters.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param string               $path            The path to the API endpoint, relative to the base URL and version.
 	 * @param array<string, mixed> $params          The request parameters.
@@ -100,10 +100,16 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	 * @return Request The request instance.
 	 */
 	public function create_get_request( string $path, array $params, array $request_options = array() ): Request {
+		$request_url     = $this->get_request_url( $path, $request_options );
+		$request_options = $this->filter_request_options(
+			$this->add_default_options( $request_options ),
+			$request_url
+		);
+
 		$request = new Get_Request(
-			$this->get_request_url( $path, $request_options ),
+			$request_url,
 			$params,
-			$this->add_default_options( $request_options )
+			$request_options
 		);
 		$this->authenticate_request( $request );
 		return $request;
@@ -112,7 +118,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Creates a POST request instance for the given parameters.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param string               $path            The path to the API endpoint, relative to the base URL and version.
 	 * @param array<string, mixed> $params          The request parameters.
@@ -120,10 +126,16 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	 * @return Request The request instance.
 	 */
 	public function create_post_request( string $path, array $params, array $request_options = array() ): Request {
+		$request_url     = $this->get_request_url( $path, $request_options );
+		$request_options = $this->filter_request_options(
+			$this->add_default_options( $request_options ),
+			$request_url
+		);
+
 		$request = new JSON_Post_Request(
-			$this->get_request_url( $path, $request_options ),
+			$request_url,
 			$params,
-			$this->add_default_options( $request_options )
+			$request_options
 		);
 		$this->authenticate_request( $request );
 		return $request;
@@ -132,7 +144,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Gets the request URL for the specified model and task.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param string               $path            The path to the API endpoint, relative to the base URL and version.
 	 * @param array<string, mixed> $request_options Optional. The request options. Default empty array.
@@ -157,7 +169,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Adds additional default request options to the given request options.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param array<string, mixed> $request_options The request options.
 	 * @return array<string, mixed> The updated request options.
@@ -172,7 +184,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Authenticates the request, if an authentication instance is set.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param Request $request The request to authenticate.
 	 */
@@ -185,7 +197,7 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Returns the human readable API name (without the "API" suffix).
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @return string The API name.
 	 */
@@ -196,11 +208,43 @@ class Generic_AI_API_Client implements Generative_AI_API_Client {
 	/**
 	 * Returns the request handler instance to use for requests.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @return Request_Handler The request handler instance.
 	 */
 	final protected function get_request_handler(): Request_Handler {
 		return $this->request_handler;
+	}
+
+	/**
+	 * Filters the request options, with awareness of the request URL.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @param array<string, mixed> $request_options The request options.
+	 * @param string               $request_url    The request URL.
+	 * @return array<string, mixed> The filtered request options.
+	 */
+	private function filter_request_options( array $request_options, string $request_url ): array {
+		if ( isset( $request_options['timeout'] ) ) {
+			$timeout = $request_options['timeout'];
+
+			/**
+			 * Filters the request timeout to use for an API request to an AI service.
+			 *
+			 * @since 0.7.0
+			 *
+			 * @param int    $timeout     The request timeout in seconds.
+			 * @param string $request_url The request URL.
+			 */
+			$request_options['timeout'] = (int) apply_filters( 'ai_services_request_timeout', $timeout, $request_url );
+
+			// If the filtered timeout is invalid, use the original value.
+			if ( $request_options['timeout'] <= 0 ) {
+				$request_options['timeout'] = $timeout;
+			}
+		}
+
+		return $request_options;
 	}
 }

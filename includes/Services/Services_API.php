@@ -100,7 +100,7 @@ final class Services_API {
 		Request_Handler $request_handler,
 		Container $container,
 		Key_Value_Repository $repository,
-		Option_Encrypter $option_encrypter = null
+		?Option_Encrypter $option_encrypter = null
 	) {
 		$this->current_user     = $current_user;
 		$this->request_handler  = $request_handler;
@@ -329,7 +329,7 @@ final class Services_API {
 	/**
 	 * Gets the service metadata for a given service slug.
 	 *
-	 * @since n.e.x.t
+	 * @since 0.7.0
 	 *
 	 * @param string $slug The service slug.
 	 * @return Service_Metadata|null The service metadata, or null if the service is not registered.
